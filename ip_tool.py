@@ -5,6 +5,7 @@ import os
 import pandas as pd
 from datetime import datetime
 from itertools import combinations
+from filelock import FileLock, Timeout
 
 
 # Configuration: Load environment variables or set defaults
@@ -21,6 +22,8 @@ current_date = datetime.now().strftime('%Y-%m-%d')
 IP_RANGES_FILE_PATH = os.path.join(IP_RANGES_DIR_PATH, f"{IP_RANGES_FILE_NAME}_{current_date}{FILE_EXTENSION}")
 COLLISIONS_RESULT_FILE_PATH = os.path.join(COLLISIONS_DIR_PATH, f"{COLLISIONS_FILE_NAME}_{current_date}{FILE_EXTENSION}")
 
+LOCK_FILE_PATH = os.path.join(IP_RANGES_DIR_PATH, f"{IP_RANGES_FILE_NAME}.lock")
+file_lock = FileLock(LOCK_FILE_PATH, timeout=10)
 
 def get_and_save_ip_ranges() -> None:
 
@@ -28,7 +31,17 @@ def get_and_save_ip_ranges() -> None:
     print(f"Got the following IPs: {ip_ranges}. Saving to file...")
 
     os.makedirs(IP_RANGES_DIR_PATH, exist_ok=True)
-    save_ip_ranges(ip_ranges)
+    
+    try:
+        with file_lock:
+            save_ip_ranges(ip_ranges)
+    except Timeout as e:
+        print(f"Failed to acquire file lock: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+    finally:
+        if file_lock.is_locked:
+            file_lock.release()
 
 
 def save_ip_ranges(ip_ranges: list[str]) -> None:
