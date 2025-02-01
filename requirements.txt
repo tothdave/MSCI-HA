@@ -1,2 +1,4 @@
+coverage==7.6.10
 netifaces==0.11.0
+pandas==2.2.3
 python-dateutil==2.9.0.post0
