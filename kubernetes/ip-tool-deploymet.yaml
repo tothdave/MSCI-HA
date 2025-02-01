@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+  name: ip-tool-deployment
+  namespace: msci-home-assignment 
+  # If the namespace does not exist you need to create with this command: kubectl create namespace my-namespace
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: ip-tool
+
+  template:
+    metadata:
+      labels:
+        app: ip-tool
+
+    spec:
+      containers:
+        - name: ip-tool
+          image: tothdavid/msci-ha:latest
+          command: ["python", "ip_tool.py"]
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IP_RANGES_DIR_PATH
+              value: "/mnt/nfs/ip-tool/ip-ranges" # Assuming the directories are created and permissions are set up
+            - name: IP_RANGES_FILE_NAME
+              value: "ip-ranges"
+            - name: COLLISIONS_DIR_PATH
+              value: "/mnt/nfs/ip-tool/collisions" # Assuming the directories are created and permissions are set up
+            - name: COLLISIONS_FILE_NAME
+              value: "collisions"
+            - name: LOGLEVEL
+              value: "INFO"
+          volumeMounts:
+            - name: ip-tool-nfs-volume
+              mountPath: /mnt/nfs
+
+      volumes:
+        - name: ip-tool-nfs-volume
+          persistentVolumeClaim:
+            claimName: nfs-pvc
