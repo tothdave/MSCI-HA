@@ -3,9 +3,11 @@ kind: PersistentVolumeClaim
 metadata:
   name: nfs-pvc
   namespace: msci-home-assignment
+  labels:
+    storage.k8s.io/name: nfs
 spec:
   accessModes:
-  - ReadWriteMany
+    - ReadWriteMany
   resources:
     requests:
       storage: 1Gi

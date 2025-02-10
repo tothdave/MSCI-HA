@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ip-tool-job
+  namespace: msci-home-assignment
+spec:
+  completions: 2
+  parallelism: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: ip-tool
+          image: tothdavid/msci-ha:latest
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: IP_RANGES_DIR_PATH
+              value: "/ip-tool-data/ip-ranges"
+            - name: IP_RANGES_FILE_NAME
+              value: "ip-ranges"
+            - name: COLLISIONS_DIR_PATH
+              value: "/ip-tool-data/collisions"
+            - name: COLLISIONS_FILE_NAME
+              value: "collisions"
+            - name: LOGLEVEL
+              value: "INFO"
+          volumeMounts:
+            - name: ip-tool-nfs-volume
+              mountPath: /ip-tool-data
+      volumes:
+        - name: ip-tool-nfs-volume
+          persistentVolumeClaim:
+            claimName: nfs-pvc
+  backoffLimit: 4
